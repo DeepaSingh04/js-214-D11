@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Authentication & Todo Management</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h2 {
+            text-align: center;
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+        }
+
+        input[type="text"], input[type="password"] {
+            margin: 10px 0;
+            padding: 10px;
+            font-size: 16px;
+        }
+
+        button {
+            padding: 10px;
+            background: #007bff;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .welcome-message {
+            margin: 20px 0;
+            padding: 10px;
+            background: #d4edda;
+            color: #155724;
+            text-align: center;
+            display: none;
+        }
+
+        .todos {
+            margin: 20px 0;
+        }
+
+        .todo-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px;
+            border-bottom: 1px solid #ccc;
+        }
+
+        .todo-item label {
+            flex-grow: 1;
+            margin-left: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>User Authentication & Todo Management</h2>
+        
+        <!-- Login Form -->
+        <form id="loginForm">
+            <input type="text" id="username" placeholder="Enter username" required>
+            <input type="password" id="password" placeholder="Enter password" required>
+            <button type="submit">Login</button>
+        </form>
+        
+        <!-- Welcome Notification -->
+        <div id="welcomeMessage" class="welcome-message"></div>
+        
+        <!-- Fetch Todos Button -->
+        <button id="fetchTodosBtn" style="display: none;">Fetch Todos</button>
+        
+        <!-- Todos Display Section -->
+        <div id="todosContainer" class="todos"></div>
+    </div>
+
+    <script>
+        // Variables to hold user authentication data
+        let userAuthToken = "";
+        let userId = "";
+
+        // HTML Elements
+        const loginForm = document.getElementById('loginForm');
+        const usernameInput = document.getElementById('username');
+        const passwordInput = document.getElementById('password');
+        const welcomeMessage = document.getElementById('welcomeMessage');
+        const fetchTodosBtn = document.getElementById('fetchTodosBtn');
+        const todosContainer = document.getElementById('todosContainer');
+
+        // Event Listener for Login Form Submission
+        loginForm.addEventListener('submit', function (e) {
+            e.preventDefault();
+
+            const username = usernameInput.value;
+            const password = passwordInput.value;
+
+            // Login Request
+            fetch('https://json-with-auth.onrender.com/user/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ username, password })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.authToken && data.userId) {
+                    // Store user authentication data
+                    userAuthToken = data.authToken;
+                    userId = data.userId;
+                    
+                    // Store in local storage
+                    localStorage.setItem('localAccessToken', userAuthToken);
+                    localStorage.setItem('userId', userId);
+
+                    // Display welcome message and show the 'Fetch Todos' button
+                    welcomeMessage.textContent = `Hey ${username}, welcome back!`;
+                    welcomeMessage.style.display = 'block';
+                    fetchTodosBtn.style.display = 'block';
+
+                    // Clear the form inputs
+                    loginForm.reset();
+                } else {
+                    alert('Login failed! Please check your credentials.');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        });
+
+        // Event Listener for Fetch Todos Button
+        fetchTodosBtn.addEventListener('click', function () {
+            // Fetch Todos Request
+            fetch(`https://json-with-auth.onrender.com/todos?userId=${userId}`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${userAuthToken}`
+                }
+            })
+            .then(response => response.json())
+            .then(todos => {
+                // Clear previous todos
+                todosContainer.innerHTML = '';
+
+                // Display each todo item
+                todos.forEach(todo => {
+                    const todoItem = document.createElement('div');
+                    todoItem.classList.add('todo-item');
+
+                    const checkbox = document.createElement('input');
+                    checkbox.type = 'checkbox';
+                    checkbox.checked = todo.completed;
+                    checkbox.addEventListener('change', function () {
+                        toggleTodoCompletion(todo.id, checkbox.checked);
+                    });
+
+                    const label = document.createElement('label');
+                    label.textContent = todo.title;
+
+                    todoItem.appendChild(checkbox);
+                    todoItem.appendChild(label);
+
+                    todosContainer.appendChild(todoItem);
+                });
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        });
+
+        // Function to toggle the completion status of a todo
+        function toggleTodoCompletion(todoId, isCompleted) {
+            fetch(`https://json-with-auth.onrender.com/todos/${todoId}`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${userAuthToken}`
+                },
+                body: JSON.stringify({ completed: isCompleted })
+            })
+            .then(response => response.json())
+            .then(updatedTodo => {
+                console.log('Todo updated:', updatedTodo);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Movie Search Application</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h2 {
+            text-align: center;
+            color: #333;
+        }
+
+        form {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        input[type="text"] {
+            width: 70%;
+            padding: 10px;
+            font-size: 16px;
+            margin-right: 10px;
+        }
+
+        button {
+            padding: 10px 15px;
+            background: #007bff;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .movies {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .movie-card {
+            background: #f9f9f9;
+            padding: 15px;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        .movie-card img {
+            max-width: 100%;
+            height: auto;
+        }
+
+        .movie-card h3 {
+            font-size: 16px;
+            margin: 10px 0;
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .pagination button {
+            padding: 10px 15px;
+            background: #007bff;
+            color: #fff;
+            border: none;
+            margin: 0 5px;
+            cursor: pointer;
+        }
+
+        .error {
+            color: red;
+            text-align: center;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Movie Search Application</h2>
+
+        <!-- Search Form -->
+        <form id="searchForm">
+            <input type="text" id="searchInput" placeholder="Enter movie title" required>
+            <button type="submit">Search</button>
+        </form>
+
+        <!-- Error Message -->
+        <div id="errorMessage" class="error" style="display: none;"></div>
+
+        <!-- Movies Display Section -->
+        <div id="moviesContainer" class="movies"></div>
+
+        <!-- Pagination Controls -->
+        <div id="paginationControls" class="pagination" style="display: none;">
+            <button id="prevButton">Previous</button>
+            <button id="nextButton">Next</button>
+        </div>
+    </div>
+
+    <script>
+        const searchForm = document.getElementById('searchForm');
+        const searchInput = document.getElementById('searchInput');
+        const moviesContainer = document.getElementById('moviesContainer');
+        const errorMessage = document.getElementById('errorMessage');
+        const paginationControls = document.getElementById('paginationControls');
+        const prevButton = document.getElementById('prevButton');
+        const nextButton = document.getElementById('nextButton');
+
+        // API Key and URL
+        const apiKey = ''; 
+        const apiUrl = 'https://www.omdbapi.com/';
+
+        let currentPage = 1;
+        let totalResults = 0;
+        let searchTerm = '';
+
+        // Event Listener for Search Form
+        searchForm.addEventListener('submit', function (e) {
+            e.preventDefault();
+            searchTerm = searchInput.value.trim();
+            if (searchTerm) {
+                currentPage = 1; // Reset to first page
+                searchMovies(searchTerm, currentPage);
+            }
+        });
+
+        // Function to Search Movies
+        function searchMovies(query, page) {
+            fetch(`${apiUrl}?apikey=${apiKey}&s=${query}&page=${page}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.Response === 'True') {
+                        displayMovies(data.Search);
+                        totalResults = parseInt(data.totalResults);
+                        updatePaginationControls();
+                        errorMessage.style.display = 'none';
+                    } else {
+                        showError(data.Error);
+                    }
+                })
+                .catch(() => showError('Failed to fetch movies. Please try again.'));
+        }
+
+        // Function to Display Movies
+        function displayMovies(movies) {
+            moviesContainer.innerHTML = '';
+            movies.forEach(movie => {
+                const movieCard = document.createElement('div');
+                movieCard.classList.add('movie-card');
+
+                const moviePoster = movie.Poster !== 'N/A' ? movie.Poster : 'https://via.placeholder.com/150';
+                movieCard.innerHTML = `
+                    <img src="${moviePoster}" alt="${movie.Title}">
+                    <h3>${movie.Title}</h3>
+                    <p>${movie.Year}</p>
+                `;
+
+                moviesContainer.appendChild(movieCard);
+            });
+        }
+
+        // Function to Update Pagination Controls
+        function updatePaginationControls() {
+            paginationControls.style.display = 'flex';
+            prevButton.disabled = currentPage === 1;
+            nextButton.disabled = currentPage * 10 >= totalResults;
+        }
+
+        // Event Listeners for Pagination Buttons
+        prevButton.addEventListener('click', function () {
+            if (currentPage > 1) {
+                currentPage--;
+                searchMovies(searchTerm, currentPage);
+            }
+        });
+
+        nextButton.addEventListener('click', function () {
+            if (currentPage * 10 < totalResults) {
+                currentPage++;
+                searchMovies(searchTerm, currentPage);
+            }
+        });
+
+        // Function to Show Error Messages
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorMessage.style.display = 'block';
+            moviesContainer.innerHTML = '';
+            paginationControls.style.display = 'none';
+        }
+    </script>
+</body>
+</html>

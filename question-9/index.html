@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real-time Auction System</title>
+    <link rel="stylesheet" href="styles.css">
+    <!-- Include Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js"></script>
+</head>
+<body>
+    <!-- User Authentication Section -->
+    <div id="authSection">
+        <h2>Auction System Login</h2>
+        <form id="loginForm">
+            <input type="email" id="email" placeholder="Email" required>
+            <input type="password" id="password" placeholder="Password" required>
+            <button type="submit">Login</button>
+            <button id="register">Register</button>
+        </form>
+    </div>
+
+    <!-- Auction Section -->
+    <div id="auctionSection" style="display: none;">
+        <h2>Available Auctions</h2>
+        <div id="auctionList"></div>
+
+        <div id="createAuction">
+            <h3>Create New Auction</h3>
+            <input type="text" id="itemName" placeholder="Item Name">
+            <textarea id="itemDescription" placeholder="Item Description"></textarea>
+            <input type="number" id="startingPrice" placeholder="Starting Price">
+            <button id="createAuctionBtn">Create Auction</button>
+        </div>
+    </div>
+
+    <!-- Bid Management Section -->
+    <div id="bidSection" style="display: none;">
+        <h2>Auction Details</h2>
+        <div id="auctionDetails"></div>
+        <input type="number" id="bidAmount" placeholder="Enter Bid Amount">
+        <button id="placeBidBtn">Place Bid</button>
+        <button id="goBack">Back to Auctions</button>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
